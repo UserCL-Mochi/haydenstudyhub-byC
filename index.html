@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hayden's Study Helper</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --font-sans: 'Inter', sans-serif; --font-mono: 'Roboto Mono', monospace; }
+        body { font-family: var(--font-sans); background-color: #f0f7ff; overflow-x: hidden; font-size: 1.125rem; line-height: 1.75rem; }
+        .mono { font-family: var(--font-mono); }
+        
+        .notion-card { transition: all 0.2s ease; border: 1px solid #d1e2f3; background: white; border-radius: 12px; height: 100%; display: flex; flex-direction: column; }
+        .notion-card:hover { border-color: #3b82f6; box-shadow: 0 4px 20px rgba(59, 130, 246, 0.1); }
+        
+        .checkbox-custom { width: 1.2rem; height: 1.2rem; border-radius: 4px; border: 2px solid #cbdcf0; transition: all 0.2s; cursor: pointer; }
+        .checkbox-custom:checked { background-color: #3b82f6; border-color: #3b82f6; }
+        
+        .tooltip-container { position: relative; display: inline-block; }
+        .tooltip-text { 
+            visibility: hidden; width: 220px; background-color: #1e293b; color: #fff; 
+            text-align: left; border-radius: 8px; padding: 12px; position: absolute; 
+            z-index: 100; top: 125%; left: 50%; margin-left: -110px; opacity: 0; 
+            transition: opacity 0.3s; font-size: 11px; line-height: 1.4; border: 1px solid #334155;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .tooltip-container:hover .tooltip-text { visibility: visible; opacity: 1; }
+        .trophy-tooltip { bottom: 130%; top: auto; width: 160px; margin-left: -80px; text-align: center; }
+
+        .xp-bar-fill { transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        .boss-task { border: 2px solid #fbbf24 !important; background: #fffcf0 !important; }
+
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+        .cal-day { aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; border-radius: 4px; border: 1px solid #e2e8f0; cursor: pointer; position: relative; }
+        .cal-day:hover { background-color: #dbeafe; }
+        .cal-today { background-color: #2563eb !important; color: white; font-weight: bold; }
+        .has-event::after { content: ''; position: absolute; bottom: 2px; width: 4px; height: 4px; background: #ef4444; border-radius: 50%; }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbdcf0; border-radius: 10px; }
+
+        .sidebar {
+            position: fixed; left: 0; top: 50%; transform: translateY(-50%) translateX(-90%);
+            width: 60px; background: #0f172a; border-radius: 0 16px 16px 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 100;
+            padding: 20px 0; display: flex; flex-direction: column; gap: 20px; align-items: center;
+        }
+        .sidebar:hover { transform: translateY(-50%) translateX(0); width: 80px; }
+        .sidebar-btn { color: #64748b; cursor: pointer; }
+        .sidebar-btn:hover { color: #3b82f6; }
+        .sidebar-tooltip { position: absolute; left: 100%; background: #0f172a; color: white; padding: 4px 8px; border-radius: 4px; font-size: 10px; opacity: 0; pointer-events: none; white-space: nowrap; margin-left: 10px; }
+        .sidebar-btn:hover .sidebar-tooltip { opacity: 1; }
+
+        .tab-btn { padding: 8px 16px; font-size: 11px; font-weight: bold; border-radius: 9999px; transition: all 0.2s; }
+        .tab-active { background-color: #2563eb; color: white; }
+        .tab-inactive { color: #64748b; }
+        .tab-inactive:hover { background-color: #eff6ff; }
+
+        .quiz-hidden { filter: blur(8px); transition: filter 0.3s; cursor: help; }
+        .quiz-hidden:hover { filter: blur(0); }
+
+        @media print {
+            .sidebar, .sidebar-btn, button, input, select, .tooltip-container, #timer-btn, #mute-btn, #add-event-btn, #btn-view-all-en, #btn-view-all-bm, .tab-btn, footer, #sync-indicator { display: none !important; }
+            body { background-color: white !important; padding: 0 !important; font-size: 10pt; }
+            .max-w-6xl { max-width: 100% !important; padding: 0 !important; }
+            .notion-card { border: 1px solid #ddd !important; box-shadow: none !important; page-break-inside: avoid; }
+            .bg-indigo-900 { background-color: #1e1b4b !important; color: white !important; -webkit-print-color-adjust: exact; }
+            h1, h2, h3 { color: #1e3a8a !important; }
+            tr { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased pb-20">
+
+    <!-- Magic Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-btn relative group" onclick="undo()">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l5 5m-5-5l5-5"></path></svg>
+            <span class="sidebar-tooltip">Undo</span>
+        </div>
+        <div class="sidebar-btn relative group" onclick="redo()">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10h-10a8 8 0 00-8 8v2m18-10l-5 5m5-5l-5-5"></path></svg>
+            <span class="sidebar-tooltip">Redo</span>
+        </div>
+        <div class="h-px bg-slate-800 w-8"></div>
+        <div class="sidebar-btn relative group" onclick="exportToCSV()">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            <span class="sidebar-tooltip">Export CSV</span>
+        </div>
+        <div class="sidebar-btn relative group" onclick="window.print()">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+            <span class="sidebar-tooltip">Save PDF</span>
+        </div>
+    </div>
+
+    <div class="max-w-6xl mx-auto px-4 pt-12">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row justify-between items-start mb-12 gap-6">
+            <div class="flex-1 w-full">
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="text-4xl">🎯</span>
+                    <h1 class="text-4xl font-bold tracking-tight text-blue-900">Hayden's Study Helper</h1>
+                </div>
+                <div id="sync-indicator" class="flex items-center gap-2 mb-4">
+                    <div id="sync-dot" class="w-2 h-2 rounded-full bg-slate-300"></div>
+                    <span id="sync-status" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Connecting to Cloud...</span>
+                </div>
+                <div class="space-y-1">
+                    <p id="motivational-quote" class="text-blue-500 font-medium italic"></p>
+                    <p id="motivational-quote-cn" class="text-[14px] text-slate-600 font-semibold"></p>
+                </div>
+            </div>
+
+            <!-- XP Card -->
+            <div class="notion-card p-4 flex flex-col gap-3 bg-indigo-900 text-white w-full md:w-96 shadow-lg relative h-auto">
+                <div class="flex items-center gap-5">
+                    <div class="flex items-center justify-center bg-white p-3 rounded-2xl border border-indigo-700 shadow-inner shrink-0">
+                        <span class="text-3xl">👾</span>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-end mb-1">
+                            <div>
+                                <p id="lvl-title" class="text-[9px] uppercase font-bold text-indigo-300 tracking-widest mb-0.5">Knowledge Scout</p>
+                                <div class="flex items-baseline gap-2">
+                                    <h4 id="lvl-display" class="text-3xl font-black mono leading-none text-white">1</h4>
+                                    <span id="streak-multiplier" class="bg-indigo-400 text-indigo-900 text-[10px] font-black px-1.5 py-0.5 rounded animate-pulse">x1.5 XP</span>
+                                </div>
+                            </div>
+                            <div class="text-right flex flex-col items-end">
+                                <div class="tooltip-container">
+                                    <svg class="w-4 h-4 cursor-help text-indigo-400 hover:text-white mb-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>
+                                    <div class="tooltip-text">
+                                        <strong>Mission Rewards:</strong><br>
+                                        • ✅ Daily Streak: +20 XP<br>
+                                        • 📋 Normal Task: +10 XP<br>
+                                        • 👑 Boss Task: +30 XP<br>
+                                        • ⏰ Pomodoro: +50 XP
+                                    </div>
+                                </div>
+                                <span id="xp-text" class="text-[10px] mono font-bold text-indigo-300">0/100</span>
+                            </div>
+                        </div>
+                        <div class="h-2.5 w-full bg-indigo-950 rounded-full overflow-hidden border border-indigo-800 mb-2">
+                            <div id="xp-bar" class="h-full bg-indigo-400 xp-bar-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Achievements Section -->
+                <div class="flex flex-wrap gap-2 justify-start border-t border-indigo-800/50 pt-2">
+                    <span class="text-[9px] font-bold text-indigo-400 uppercase self-center mr-2">Trophies:</span>
+                    <div id="badge-container" class="flex flex-wrap gap-3">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pomodoro -->
+            <div class="notion-card p-4 border-2 border-blue-200 flex items-center gap-4 bg-blue-50/50 h-auto shadow-sm shrink-0">
+                <div class="flex flex-col text-center">
+                    <select id="timer-duration" class="text-[10px] font-bold text-blue-500 uppercase bg-transparent outline-none cursor-pointer hover:text-blue-700" onchange="resetTimer()">
+                        <option value="5">5 Min</option>
+                        <option value="10">10 Min</option>
+                        <option value="15">15 Min</option>
+                        <option value="20">20 Min</option>
+                        <option value="25" selected>25 Min</option>
+                        <option value="30">30 Min</option>
+                        <option value="45">45 Min</option>
+                        <option value="60">60 Min</option>
+                    </select>
+                    <span id="timer-display" class="text-2xl font-bold text-blue-600 mono leading-none mt-1">25:00</span>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <button onclick="toggleTimer()" id="timer-btn" class="bg-blue-600 text-white p-2.5 rounded-full hover:bg-blue-700 shadow-md transition-all active:scale-95">
+                        <svg id="timer-icon" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M4.5 3.5A.5.5 0 015 4v12a.5.5 0 01-1 0V4a.5.5 0 01.5-.5zM15.5 3.5a.5.5 0 01.5.5v12a.5.5 0 01-1 0V4a.5.5 0 01.5-.5z"/></svg>
+                    </button>
+                    <button onclick="toggleMute()" id="mute-btn" class="text-slate-400 hover:text-blue-500 transition-colors" title="Alert Sound Toggle">
+                        <svg id="mute-icon" class="w-5 h-5 mx-auto" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tip -->
+        <section class="mb-8">
+            <div class="notion-card bg-slate-900 text-white p-6 shadow-xl border-l-8 border-blue-500 h-auto">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-blue-400 font-bold text-sm uppercase tracking-widest font-normal">Crystal 姐姐の建议</h3>
+                    <button onclick="refreshTutorTip()" class="text-[10px] text-slate-500 hover:text-blue-300">🔄 Refresh Tip</button>
+                </div>
+                <div id="tutor-tip-content" class="text-sm text-slate-300 leading-relaxed min-h-[4rem]"></div>
+            </div>
+        </section>
+
+        <!-- Targets -->
+        <section class="mb-12">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold flex items-center gap-2">📈 Score Targets <span class="text-[14px] font-semibold text-slate-600 ml-2">成绩目标</span></h2>
+                <button onclick="toggleTargetModal()" class="text-xs bg-blue-100 text-blue-600 px-3 py-1 rounded-full font-bold">+ Add Subject</button>
+            </div>
+            <div id="targets-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+        </section>
+
+        <!-- Streak & Calendar Alignment -->
+        <div class="flex flex-col lg:flex-row gap-8 mb-12 items-stretch">
+            <div class="lg:w-2/3 flex flex-col h-full">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-2xl font-bold flex items-center gap-2">🔥 Daily Streak <span class="text-[14px] font-semibold text-slate-600 ml-2">每日打卡</span></h2>
+                    <div class="flex gap-2">
+                        <button onclick="toggleHistoryModal()" class="text-[10px] bg-white border border-blue-100 text-blue-400 px-3 py-1 rounded-full font-bold uppercase tracking-tighter">📂 Past Records</button>
+                        <button onclick="archiveWeek()" class="text-[10px] bg-blue-600 text-white px-3 py-1 rounded-full font-bold shadow-sm uppercase tracking-tighter">✨ Complete Week</button>
+                    </div>
+                </div>
+                <div class="notion-card flex-grow overflow-hidden shadow-sm">
+                    <table class="w-full text-sm">
+                        <thead class="bg-blue-50/50 border-b border-blue-100">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-[10px] text-blue-800 uppercase font-bold tracking-widest">Day</th>
+                                <th class="px-4 py-3 text-center text-[10px] text-blue-800 uppercase font-bold tracking-widest">Done?</th>
+                                <th class="px-4 py-3 text-left text-[10px] text-blue-800 uppercase font-bold tracking-widest">What I Learned (今日所得)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tracker-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="lg:w-1/3 flex flex-col gap-6 h-full">
+                <section class="flex flex-col h-1/2">
+                    <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">📋 Session Prep <span class="text-[14px] font-semibold text-slate-600 ml-2">课前准备</span></h2>
+                    <div class="notion-card p-5 space-y-4 shadow-sm flex-grow">
+                        <div id="prep-checklist" class="space-y-2 overflow-y-auto max-h-40 custom-scrollbar"></div>
+                        <div class="pt-4 border-t border-slate-100 flex gap-2">
+                            <input id="new-prep-item" type="text" placeholder="Add task..." class="flex-1 border border-blue-50 rounded-lg px-2 py-1 text-xs outline-none bg-blue-50/30 focus:ring-1 focus:ring-blue-300">
+                            <button onclick="addPrepItem()" class="bg-blue-900 text-white px-3 py-1 rounded text-xs font-bold hover:bg-black">Add</button>
+                        </div>
+                    </div>
+                </section>
+                <section class="flex flex-col h-1/2">
+                    <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">📅 Calendar <span class="text-[14px] font-semibold text-slate-600 ml-2">日历</span></h2>
+                    <div class="notion-card p-4 shadow-sm flex-grow">
+                        <div class="flex justify-between items-center mb-3">
+                            <button onclick="changeMonth(-1)" class="p-1 hover:bg-blue-50 rounded text-blue-400 font-bold">❮</button>
+                            <span id="cal-header" class="text-sm font-bold text-blue-900"></span>
+                            <button onclick="changeMonth(1)" class="p-1 hover:bg-blue-50 rounded text-blue-400 font-bold">❯</button>
+                        </div>
+                        <div class="calendar-grid text-[10px] text-center text-blue-300 font-bold mb-2">
+                            <div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>
+                        </div>
+                        <div id="calendar-days" class="calendar-grid"></div>
+                        <div id="event-section" class="mt-4 pt-4 border-t border-blue-50">
+                            <div class="flex justify-between items-center mb-2">
+                                <span id="selected-date-label" class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Select Date</span>
+                                <button onclick="addEvent()" class="text-[9px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full hidden" id="add-event-btn">+ Event</button>
+                            </div>
+                            <div id="date-events" class="space-y-1"></div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- Study Hub -->
+        <section class="mb-12">
+            <div class="flex items-center gap-4 mb-6">
+                <h2 class="text-2xl font-bold text-slate-800">💡 Study Hub</h2>
+                <div class="flex bg-slate-200 p-1 rounded-full shadow-inner">
+                    <button onclick="switchTab('vaults')" id="tab-vaults" class="tab-btn tab-active shadow-sm">My Vaults</button>
+                    <button onclick="switchTab('quiz')" id="tab-quiz" class="tab-btn tab-inactive">Quiz Mode</button>
+                </div>
+            </div>
+
+            <div id="view-vaults" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="flex flex-col h-full">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold flex items-center gap-2">🧪 English / Science <span class="text-[14px] font-semibold text-slate-600 ml-2">英语/科学词库</span></h3>
+                        <button id="btn-view-all-en" onclick="toggleVaultSubpage('english')" class="hidden text-[10px] text-blue-600 font-bold hover:underline">VIEW ARCHIVE</button>
+                    </div>
+                    <div class="notion-card p-4 shadow-sm flex-grow">
+                        <div id="vocab-list" class="space-y-3 mb-4 min-h-[100px]"></div>
+                        <div class="flex gap-2">
+                            <input id="new-word-en" type="text" placeholder="Word" class="w-1/3 border border-blue-50 rounded-lg px-2 py-1 text-xs outline-none bg-blue-50/20">
+                            <input id="new-word-cn" type="text" placeholder="Chinese" class="w-1/3 border border-blue-50 rounded-lg px-2 py-1 text-xs outline-none bg-blue-50/20">
+                            <button onclick="addVocab('english')" class="flex-1 bg-blue-900 text-white px-3 py-1 rounded text-xs font-bold hover:bg-black transition">+ Add</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col h-full">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold flex items-center gap-2">Malay / Chinese <span class="text-[14px] font-semibold text-slate-600 ml-2">马语/中文词库</span></h3>
+                        <button id="btn-view-all-bm" onclick="toggleVaultSubpage('malay')" class="hidden text-[10px] text-blue-600 font-bold hover:underline">VIEW ARCHIVE</button>
+                    </div>
+                    <div class="notion-card p-4 shadow-sm border-t-4 border-blue-300 flex-grow">
+                        <div id="malay-vocab-list" class="space-y-3 mb-4 min-h-[100px]"></div>
+                        <div class="flex gap-2">
+                            <input id="new-bm-word" type="text" placeholder="BM Word" class="w-1/3 border border-blue-50 rounded-lg px-2 py-1 text-xs outline-none bg-blue-50/20">
+                            <input id="new-bm-cn" type="text" placeholder="Chinese" class="w-1/3 border border-blue-50 rounded-lg px-2 py-1 text-xs outline-none bg-blue-50/20">
+                            <button onclick="addVocab('malay')" class="flex-1 bg-blue-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-blue-700 transition">+ Add</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-quiz" class="hidden">
+                <div class="notion-card p-10 border-2 border-orange-100 bg-orange-50/20 text-center rounded-3xl">
+                    <div class="mb-8">
+                        <span class="text-5xl">🧠</span>
+                        <h3 class="text-2xl font-bold mt-3 text-orange-900">Quiz Center</h3>
+                        <p class="text-slate-500 text-sm mt-1">Review your personal study notes and vocabulary!</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+                        <div class="bg-white p-8 rounded-2xl border border-orange-100 shadow-sm hover:shadow-md transition-shadow">
+                            <h4 class="font-bold text-blue-600 text-lg mb-2">Science Explorer</h4>
+                            <p class="text-xs text-slate-500 mb-6">Test definitions and real-world examples from your vault.</p>
+                            <button onclick="startQuiz('english')" class="w-full py-3 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 shadow-md">Launch Science Quiz</button>
+                        </div>
+                        <div class="bg-white p-8 rounded-2xl border border-orange-100 shadow-sm hover:shadow-md transition-shadow">
+                            <h4 class="font-bold text-emerald-600 text-lg mb-2">Malay Language Mastery</h4>
+                            <p class="text-xs text-slate-500 mb-6">Master BM vocabulary with interactive flashcards.</p>
+                            <button onclick="startQuiz('malay')" class="w-full py-3 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 shadow-md">Launch Malay Quiz</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Imbuhan Mastery Section -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold flex items-center gap-2 mb-4">Imbuhan Mastery <span class="text-[14px] font-semibold text-slate-600 ml-2">马语词缀</span></h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div class="notion-card p-5 border-l-4 border-blue-400">
+                    <p class="text-xs font-black text-blue-600 uppercase tracking-widest mb-1">Prefix: meN-</p>
+                    <p class="text-[11px] text-slate-500 font-bold mb-3">Function: Active Actions (动作)</p>
+                    <div class="bg-blue-50 p-3 rounded-xl space-y-1.5">
+                        <p class="text-xs font-bold text-blue-900">Baca → <span class="text-blue-600">Membaca</span></p>
+                        <p class="text-xs font-bold text-blue-900">Tulis → <span class="text-blue-600">Menulis</span></p>
+                    </div>
+                </div>
+                <div class="notion-card p-5 border-l-4 border-emerald-400">
+                    <p class="text-xs font-black text-emerald-600 uppercase tracking-widest mb-1">Prefix: beR-</p>
+                    <p class="text-[11px] text-slate-500 font-bold mb-3">Function: State / Condition (状态)</p>
+                    <div class="bg-emerald-50 p-3 rounded-xl space-y-1.5">
+                        <p class="text-xs font-bold text-emerald-900">Main → <span class="text-emerald-600">Bermain</span></p>
+                        <p class="text-xs font-bold text-emerald-900">Jalan → <span class="text-emerald-600">Berjalan</span></p>
+                    </div>
+                </div>
+                <div class="notion-card p-5 border-l-4 border-amber-400">
+                    <p class="text-xs font-black text-amber-600 uppercase tracking-widest mb-1">Prefix: teR-</p>
+                    <p class="text-[11px] text-slate-500 font-bold mb-3">Function: Accidental / Most (无意/最)</p>
+                    <div class="bg-amber-50 p-3 rounded-xl space-y-1.5">
+                        <p class="text-xs font-bold text-amber-900">Makan → <span class="text-amber-600">Termakan</span></p>
+                        <p class="text-xs font-bold text-amber-900">Pandai → <span class="text-amber-600">Terpandai</span></p>
+                    </div>
+                </div>
+                <div class="notion-card p-5 border-l-4 border-purple-400">
+                    <p class="text-xs font-black text-purple-600 uppercase tracking-widest mb-1">Prefix: peN-</p>
+                    <p class="text-[11px] text-slate-500 font-bold mb-3">Function: Person / Tool (人物/工具)</p>
+                    <div class="bg-purple-50 p-3 rounded-xl space-y-1.5">
+                        <p class="text-xs font-bold text-purple-900">Lari → <span class="text-purple-600">Pelari</span></p>
+                        <p class="text-xs font-bold text-purple-900">Sapu → <span class="text-purple-600">Penyapu</span></p>
+                    </div>
+                </div>
+                <div class="notion-card p-5 border-l-4 border-red-400">
+                    <p class="text-xs font-black text-red-600 uppercase tracking-widest mb-1">Prefix: di-</p>
+                    <p class="text-[11px] text-slate-500 font-bold mb-3">Function: Passive Actions (被动)</p>
+                    <div class="bg-red-50 p-3 rounded-xl space-y-1.5">
+                        <p class="text-xs font-bold text-red-900">Beli → <span class="text-red-600">Dibeli</span></p>
+                        <p class="text-xs font-bold text-red-900">Makan → <span class="text-red-600">Dimakan</span></p>
+                    </div>
+                </div>
+                <div class="notion-card p-5 border-l-4 border-indigo-400">
+                    <p class="text-xs font-black text-indigo-600 uppercase tracking-widest mb-1">Prefix: ke-</p>
+                    <p class="text-[11px] text-slate-500 font-bold mb-3">Function: Ordinal / State (序数/名词)</p>
+                    <div class="bg-indigo-50 p-3 rounded-xl space-y-1.5">
+                        <p class="text-xs font-bold text-indigo-900">Satu → <span class="text-indigo-600">Kesatu</span></p>
+                        <p class="text-xs font-bold text-indigo-900">Tua → <span class="text-indigo-600">Ketua</span></p>
+                    </div>
+                </div>
+                <div class="notion-card p-5 border-l-4 border-teal-400">
+                    <p class="text-xs font-black text-teal-600 uppercase tracking-widest mb-1">Prefix: se-</p>
+                    <p class="text-[11px] text-slate-500 font-bold mb-3">Function: One / Same (一/相同)</p>
+                    <div class="bg-teal-50 p-3 rounded-xl space-y-1.5">
+                        <p class="text-xs font-bold text-teal-900">Hari → <span class="text-teal-600">Sehari</span></p>
+                        <p class="text-xs font-bold text-teal-900">Kelas → <span class="text-teal-600">Sekelas</span></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Exam Verbs -->
+        <section class="mb-12">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold flex items-center gap-2">📖 Exam Verbs <span class="text-[14px] font-semibold text-slate-600 ml-2">考试动词</span></h2>
+                <button onclick="shuffleVerbs()" class="text-[10px] text-blue-500 font-bold hover:underline transition">🔄 Next Set</button>
+            </div>
+            <div id="en-verb-list" class="grid grid-cols-2 lg:grid-cols-4 gap-4"></div>
+        </section>
+
+        <div id="toast" class="fixed bottom-6 right-6 transform translate-y-20 opacity-0 bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl transition-all duration-300 z-[100] flex items-center gap-3">
+            <span id="toast-icon">✨</span>
+            <span id="toast-msg" class="text-sm font-medium"></span>
+        </div>
+
+        <!-- Modals -->
+        <div id="history-modal" class="fixed inset-0 bg-blue-900/40 hidden items-center justify-center p-4 z-50 backdrop-blur-md">
+            <div class="bg-white p-6 rounded-2xl w-full max-w-2xl shadow-2xl max-h-[80vh] overflow-hidden flex flex-col border border-blue-100">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-bold text-xl text-blue-900 uppercase italic">Past Records</h3>
+                    <button onclick="toggleHistoryModal()" class="text-slate-400 hover:text-slate-600 text-2xl font-bold">✕</button>
+                </div>
+                <div id="history-content" class="space-y-6 overflow-y-auto pr-2 custom-scrollbar"></div>
+            </div>
+        </div>
+
+        <div id="target-modal" class="fixed inset-0 bg-blue-900/40 hidden items-center justify-center p-4 z-50 backdrop-blur-sm">
+            <div class="bg-white p-8 rounded-2xl w-full max-w-sm shadow-2xl">
+                <h3 class="font-bold text-xl mb-6 text-blue-900">Add Score Target</h3>
+                <div class="space-y-5">
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Subject Name</label>
+                        <input id="modal-sub" type="text" placeholder="e.g. Science" class="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-100">
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="w-1/2">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Current %</label>
+                            <input id="modal-cur" type="number" placeholder="50" class="w-full border rounded-xl px-4 py-3 outline-none">
+                        </div>
+                        <div class="w-1/2">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Target %</label>
+                            <input id="modal-tar" type="number" placeholder="80" class="w-full border rounded-xl px-4 py-3 outline-none">
+                        </div>
+                    </div>
+                    <button onclick="addSubjectTarget()" class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all">Save Progress Goal</button>
+                    <button onclick="toggleTargetModal()" class="w-full py-2 text-slate-400 text-xs font-bold hover:text-slate-600">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="vault-subpage" class="fixed inset-0 bg-blue-950/60 hidden items-center justify-center p-4 z-[60] backdrop-blur-lg">
+            <div class="bg-white rounded-3xl w-full max-w-3xl shadow-2xl max-h-[90vh] flex flex-col border border-blue-100 overflow-hidden">
+                <div class="p-6 border-b bg-blue-50 flex justify-between items-center">
+                    <h3 id="vault-title" class="text-2xl font-bold text-blue-900">Full Archive</h3>
+                    <button onclick="toggleVaultSubpage()" class="bg-white p-2 rounded-full text-slate-400 hover:text-blue-600 text-2xl font-bold">✕</button>
+                </div>
+                <div id="vault-content" class="p-6 overflow-y-auto custom-scrollbar space-y-4 bg-white"></div>
+            </div>
+        </div>
+
+        <footer class="mt-16 pt-8 border-t border-blue-100 text-center text-blue-300 text-[10px] uppercase tracking-widest font-bold">
+            Hayden's Study Companion • Crafted by Crystal Liew for Hayden's Future Success. Jia You
+        </footer>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        let userId = null;
+        let isSyncing = false;
+
+        const syncStatusText = document.getElementById('sync-status');
+        const syncDot = document.getElementById('sync-dot');
+
+        function setSyncStatus(status) {
+            if (status === 'connected') {
+                syncStatusText.textContent = "Cloud Sync: Active";
+                syncDot.className = "w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]";
+            } else if (status === 'syncing') {
+                syncStatusText.textContent = "Cloud Sync: Saving...";
+                syncDot.className = "w-2 h-2 rounded-full bg-amber-400 animate-pulse";
+            } else if (status === 'error') {
+                syncStatusText.textContent = "Cloud Sync: Error";
+                syncDot.className = "w-2 h-2 rounded-full bg-red-500";
+            }
+        }
+
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                setSyncStatus('error');
+            }
+        };
+        initAuth();
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                userId = user.uid;
+                setSyncStatus('connected');
+                const docRef = doc(db, 'artifacts', appId, 'users', userId, 'data', 'dashboardState');
+                onSnapshot(docRef, (docSnap) => {
+                    if (docSnap.exists() && !isSyncing) {
+                        window.updateStateFromCloud(docSnap.data());
+                    }
+                }, (error) => {
+                    setSyncStatus('error');
+                });
+            }
+        });
+
+        window.pushToCloud = async (state) => {
+            if (!userId) return;
+            isSyncing = true;
+            setSyncStatus('syncing');
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'users', userId, 'data', 'dashboardState');
+                await setDoc(docRef, JSON.parse(JSON.stringify(state)));
+                setSyncStatus('connected');
+            } catch (error) {
+                setSyncStatus('error');
+            } finally {
+                isSyncing = false;
+            }
+        };
+    </script>
+
+    <script>
+        // Core Logic
+        const examLibrary = [
+            { v: 'State', cn: '列出 / 简单说明', bm: 'Nyatakan' },
+            { v: 'Describe', cn: '描述过程/特征', bm: 'Perihalkan' },
+            { v: 'Explain', cn: '解释为什么', bm: 'Terangkan' },
+            { v: 'Compare', cn: '比较异同', bm: 'Bandingkan' },
+            { v: 'Contrast', cn: '对比不同', bm: 'Bezakan' },
+            { v: 'Analyze', cn: '分析数据', bm: 'Analisis' },
+            { v: 'Suggest', cn: '建议', bm: 'Cadangkan' },
+            { v: 'Predict', cn: '预测结果', bm: 'Ramalkan' },
+            { v: 'Evaluate', cn: '评价/评估', bm: 'Menilai' },
+            { v: 'Justify', cn: '证明合理性', bm: 'Wajarkan' },
+            { v: 'Identify', cn: '识别/鉴定', bm: 'Kenal pasti' },
+            { v: 'Summarize', cn: '总结', bm: 'Rumuskan' },
+            { v: 'Interpret', cn: '诠释/解释', bm: 'Tafsirkan' },
+            { v: 'Illustrate', cn: '举例说明/阐明', bm: 'Ilustrasikan' },
+            { v: 'Discuss', cn: '讨论', bm: 'Bincangkan' },
+            { v: 'Outline', cn: '概述', bm: 'Gariskan' }
+        ];
+
+        const trophyLibrary = [
+            { icon: '🏆', title: 'Level Pioneer', req: 'Reach Level 2' },
+            { icon: '👑', title: 'Boss Conqueror', req: 'Finish a Boss Task' },
+            { icon: '🔥', title: 'Streak Starter', req: 'Complete 1 Week' },
+            { icon: '⏱️', title: 'Focus Master', req: 'Finish a Pomodoro' },
+            { icon: '📚', title: 'Word Collector', req: 'Add 5 vocab words' },
+            { icon: '🎯', title: 'Goal Setter', req: 'Set a Score Target' },
+            { icon: '🧠', title: 'Quiz Wiz', req: 'Launch a Quiz Mode' },
+            { icon: '💎', title: 'Elite Scholar', req: 'Reach Level 5' }
+        ];
+
+        const dayIcons = { 'Monday': '🌙', 'Tuesday': '🔥', 'Wednesday': '💧', 'Thursday': '🌿', 'Friday': '✨', 'Saturday': '🏖️', 'Sunday': '🛋️' };
+        const motivationQuotes = [
+            { en: "Success is the sum of small efforts, repeated day in and day out.", cn: "成功是日复一日小小努力的积累。" },
+            { en: "Believe you can and you're halfway there.", cn: "相信你能做到，你就已经成功了一半。" },
+            { en: "Don't stop until you're proud.", cn: "直到你为自己感到自豪为止，不要停下。" }
+        ];
+        
+        const tutorTips = [ 
+            "💡 不要死记硬背：理解逻辑才是关键。如果你无法用英语表达，请使用 AI 工具先写出中文思路。\nDon't just memorize: Logic is key.",
+            "🧪 Science: Identify your Manipulated Variable (MV) first. The 'outcome' is always the Responding Variable (RV).",
+            "📖 English: When writing essays, use 'connectors' (Furthermore, However).",
+            "📜 Sejarah: Don't memorize dates; memorize the 'story'.",
+            "🌍 Geography: Visualizing maps is easier than reading text.",
+            "🧠 Spaced Repetition: 10 mins of review is better than 1 hour of cramming."
+        ];
+
+        const levelTitles = ["Knowledge Scout", "Science Apprentice", "Academic Warrior", "Sejarah Master", "Geography Genius", "Study Legend"];
+
+        let state = JSON.parse(localStorage.getItem('hayden_final_v1')) || {
+            tracker: Object.keys(dayIcons).map(d => ({ day: d, done: false, bullets: [''] })),
+            vocab: [{ en: 'Evaporation', cn: '蒸发', ex: 'Sweat drying on skin.', exCn: '皮肤上的汗水变干。' }],
+            malayVocab: [{ bm: 'Tumbuhan', cn: '植物', ex: 'Tumbuhan perlu matahari.', exCn: '植物需要阳光。' }],
+            prep: [{ id: 1, text: 'Check mid-term syllabus', checked: false, isBoss: true }],
+            targets: [{ subject: 'English', target: 65, current: 59 }, { subject: 'Science', target: 58, current: 49 }],
+            history: [], events: {}, xp: 0, level: 1, isMuted: false, badges: new Array(8).fill(false)
+        };
+
+        let historyStack = [], redoStack = [], currentViewDate = new Date(), selectedDate = null;
+        let timerInterval, timeLeft = 25 * 60, isTimerRunning = false, quizMode = false;
+
+        function showToast(msg, icon = "✨") {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = msg;
+            document.getElementById('toast-icon').textContent = icon;
+            t.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 3000);
+        }
+
+        window.updateStateFromCloud = (cloudState) => {
+            state = cloudState;
+            localStorage.setItem('hayden_final_v1', JSON.stringify(state));
+            render();
+        };
+
+        function save(pushHistory = true) {
+            if (pushHistory) { historyStack.push(JSON.stringify(state)); redoStack = []; }
+            localStorage.setItem('hayden_final_v1', JSON.stringify(state));
+            if (window.pushToCloud) window.pushToCloud(state);
+            render(); 
+        }
+
+        function undo() { if (historyStack.length === 0) return; redoStack.push(JSON.stringify(state)); state = JSON.parse(historyStack.pop()); save(false); }
+        function redo() { if (redoStack.length === 0) return; historyStack.push(JSON.stringify(state)); state = JSON.parse(redoStack.pop()); save(false); }
+
+        function unlockBadge(idx) {
+            if(!state.badges[idx]) { state.badges[idx] = true; showToast(`New Trophy: ${trophyLibrary[idx].title}`, "🏆"); save(false); }
+        }
+
+        function addXP(amount) {
+            const actualGain = Math.floor(amount * 1.5);
+            state.xp += actualGain;
+            const threshold = state.level * 100;
+            if (state.xp >= threshold) {
+                state.xp -= threshold; state.level++;
+                if (!state.isMuted) playTone(880, 0.5, 0.3);
+                showToast(`Level Up! ${state.level}`, "🎊");
+                if(state.level >= 2) unlockBadge(0);
+                if(state.level >= 5) unlockBadge(7);
+            }
+            save(false);
+        }
+
+        function playTone(f, v, d) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const o = ctx.createOscillator(); const g = ctx.createGain();
+                o.type = 'sine'; o.frequency.setValueAtTime(f, ctx.currentTime);
+                g.gain.setValueAtTime(v, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + d);
+                o.connect(g); g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime + d);
+            } catch(e) {}
+        }
+
+        function toggleTimer() {
+            if (isTimerRunning) { clearInterval(timerInterval); isTimerRunning = false; } 
+            else {
+                isTimerRunning = true;
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    if(timeLeft <= 0) {
+                        clearInterval(timerInterval); isTimerRunning = false;
+                        addXP(50); unlockBadge(3);
+                        if(!state.isMuted) playTone(440, 0.5, 1);
+                        showToast("Done!", "🔔"); resetTimer();
+                    }
+                    updateTimerDisplay();
+                }, 1000);
+            }
+            render();
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval); isTimerRunning = false;
+            timeLeft = parseInt(document.getElementById('timer-duration').value) * 60;
+            updateTimerDisplay(); render();
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(timeLeft / 60); const s = timeLeft % 60;
+            document.getElementById('timer-display').textContent = `${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function toggleMute() { state.isMuted = !state.isMuted; save(false); }
+
+        function switchTab(t) { quizMode = (t === 'quiz'); render(); }
+        function startQuiz(t) { quizMode = true; switchTab('vaults'); unlockBadge(6); }
+
+        async function addVocab(type) {
+            const wIn = document.getElementById(type === 'english' ? 'new-word-en' : 'new-bm-word');
+            const cIn = document.getElementById(type === 'english' ? 'new-word-cn' : 'new-bm-cn');
+            const w = wIn.value, c = cIn.value; if(!w) return;
+            const item = { [type === 'english' ? 'en' : 'bm']: w, cn: c, ex: '⏳...', exCn: '' };
+            if(type === 'english') state.vocab.unshift(item); else state.malayVocab.unshift(item);
+            if((state.vocab.length + state.malayVocab.length) >= 5) unlockBadge(4);
+            wIn.value = ''; cIn.value = ''; save();
+            const ai = await generateAutoExample(w);
+            const ref = type === 'english' ? state.vocab[0] : state.malayVocab[0];
+            ref.ex = ai.ex; ref.exCn = ai.exCn; save(false);
+        }
+
+        async function generateAutoExample(t) {
+            const p = `Science example for "${t}". Format: Example: [text] | Translation: [text]`;
+            try {
+                const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ contents: [{ parts: [{ text: p }] }] }) });
+                const res = await r.json(); const txt = res.candidates?.[0]?.content?.parts?.[0]?.text;
+                const pts = txt.split('|'); return { ex: pts[0]?.replace('Example:', '').trim(), exCn: pts[1]?.replace('Translation:', '').trim() };
+            } catch (e) { return { ex: "...", exCn: "" }; }
+        }
+
+        function renderVaultItem(v, i, t) {
+            return `<div class="p-3 bg-blue-50/50 rounded-xl group border border-blue-100 relative shadow-sm">
+                <div class="flex justify-between items-center mb-1"><span class="font-bold text-black text-xs">${v.en || v.bm}</span><button onclick="deleteVocab('${t}', ${i})" class="text-blue-300 opacity-0 group-hover:opacity-100 font-bold hover:text-red-500">✕</button></div>
+                <div class="${quizMode ? 'quiz-hidden' : ''}"><div class="text-slate-700 font-bold text-[14px]">${v.cn}</div><div class="mt-1 text-slate-600 text-[11px] font-medium">${v.ex || ''}</div></div></div>`;
+        }
+
+        function deleteVocab(t, i) { if(t==='english') state.vocab.splice(i, 1); else state.malayVocab.splice(i, 1); save(); }
+        function shuffleVerbs() { examLibrary.push(examLibrary.shift()); render(); }
+
+        function render() {
+            document.getElementById('lvl-display').textContent = state.level;
+            const threshold = state.level * 100;
+            document.getElementById('xp-text').textContent = `${state.xp}/${threshold}`;
+            document.getElementById('xp-bar').style.width = `${(state.xp/threshold)*100}%`;
+            document.getElementById('lvl-title').textContent = levelTitles[Math.min(state.level - 1, levelTitles.length - 1)];
+
+            document.getElementById('badge-container').innerHTML = trophyLibrary.map((t, i) => `
+                <div class="tooltip-container">
+                    <span class="text-xl transition-all cursor-help ${state.badges[i] ? '' : 'opacity-20 grayscale filter'} block">${t.icon}</span>
+                    <div class="tooltip-text trophy-tooltip"><p class="font-black text-[10px] uppercase mb-1">${t.title}</p><p class="text-[9px] text-slate-300">${state.badges[i] ? '🏆 Unlocked!' : '🔒 ' + t.req}</p></div>
+                </div>`).join('');
+
+            document.getElementById('tracker-body').innerHTML = state.tracker.map((item, idx) => `
+                <tr class="border-b last:border-0 hover:bg-blue-50 transition">
+                    <td class="px-4 py-4 font-bold text-blue-900">${dayIcons[item.day]} ${item.day.slice(0,3)}</td>
+                    <td class="px-4 py-4 text-center"><input type="checkbox" ${item.done ? 'checked' : ''} onchange="updateTracker(${idx})" class="checkbox-custom"></td>
+                    <td class="px-4 py-4"><div class="space-y-2">${item.bullets.map((b, bIdx) => `<div class="flex items-center gap-2 group/bullet"><span class="text-blue-200">•</span><input type="text" value="${b}" onchange="updateBullet(${idx}, ${bIdx}, this.value)" class="flex-1 bg-transparent text-xs outline-none focus:border-blue-200"><button onclick="removeBullet(${idx}, ${bIdx})" class="opacity-0 group-hover/bullet:opacity-100 text-red-300">✕</button></div>`).join('')}<button onclick="addBullet(${idx})" class="text-[9px] font-bold text-blue-400 uppercase tracking-widest">+ Add Point</button></div></td>
+                </tr>`).join('');
+
+            document.getElementById('prep-checklist').innerHTML = state.prep.map((item, idx) => `<div class="flex items-center justify-between group p-1.5 hover:bg-blue-50/50 rounded-lg transition ${item.isBoss ? 'boss-task' : ''}"><div class="flex items-center gap-2"><input type="checkbox" ${item.checked ? 'checked' : ''} onchange="updatePrep(${idx})" class="checkbox-custom"><span class="text-xs ${item.checked ? 'line-through text-slate-300' : 'text-slate-600'} font-medium">${item.isBoss ? '👑 ' : ''}${item.text}</span></div><div class="flex gap-2"><button onclick="setBossTask(${idx})" class="opacity-0 group-hover:opacity-100 text-yellow-500">👑</button><button onclick="deletePrep(${idx})" class="opacity-0 group-hover:opacity-100 text-red-300">✕</button></div></div>`).join('');
+
+            document.getElementById('targets-grid').innerHTML = state.targets.map((t, idx) => `<div class="notion-card p-4 relative bg-blue-50/10"><p class="text-[10px] font-bold text-blue-600 uppercase tracking-tighter">${t.subject}</p><div class="flex justify-between items-end mt-2"><span class="text-2xl font-black text-amber-500 mono">${t.target}%</span><span class="text-[10px] text-slate-500 font-bold bg-white px-2 rounded-full border border-blue-50">${t.current}%</span></div><button onclick="deleteSubject(${idx})" class="absolute top-1 right-2 text-slate-200 hover:text-red-400">✕</button></div>`).join('');
+
+            document.getElementById('vocab-list').innerHTML = state.vocab.slice(0,5).map((v, i) => renderVaultItem(v, i, 'english')).join('');
+            document.getElementById('malay-vocab-list').innerHTML = state.malayVocab.slice(0,5).map((v, i) => renderVaultItem(v, i, 'malay')).join('');
+            document.getElementById('btn-view-all-en').classList.toggle('hidden', state.vocab.length <= 5);
+            document.getElementById('btn-view-all-bm').classList.toggle('hidden', state.malayVocab.length <= 5);
+            document.getElementById('en-verb-list').innerHTML = examLibrary.slice(0, 12).map(v => `<div class="bg-white p-6 border-2 border-blue-50 rounded-2xl text-center shadow-md w-full"><p class="text-3xl font-black text-blue-800 mono leading-none">${v.v}</p><p class="text-[11px] text-blue-400 uppercase font-black mt-2 tracking-tighter">${v.bm}</p><p class="text-[14px] text-slate-700 font-bold mt-2 border-t border-slate-50 pt-2">${v.cn}</p></div>`).join('');
+            
+            const m = currentViewDate.getMonth(), y = currentViewDate.getFullYear();
+            document.getElementById('cal-header').textContent = currentViewDate.toLocaleDateString('en-MY', { month: 'long', year: 'numeric' });
+            const grid = document.getElementById('calendar-days'); grid.innerHTML = '';
+            const first = new Date(y, m, 1).getDay(), days = new Date(y, m+1, 0).getDate();
+            for(let i=0; i<first; i++) grid.appendChild(document.createElement('div'));
+            for(let d=1; d<=days; d++) {
+                const dk = `${y}-${m+1}-${d}`; const div = document.createElement('div'); div.className = 'cal-day'; div.textContent = d;
+                if(d === new Date().getDate() && m === new Date().getMonth() && y === new Date().getFullYear()) div.classList.add('cal-today');
+                if(state.events[dk]) div.classList.add('has-event');
+                div.onclick = () => selectDate(dk); grid.appendChild(div);
+            }
+
+            document.getElementById('timer-icon').innerHTML = isTimerRunning ? '<path d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z"/>' : '<path d="M4.5 3.5A.5.5 0 015 4v12a.5.5 0 01-1 0V4a.5.5 0 01.5-.5zM15.5 3.5a.5.5 0 01.5.5v12a.5.5 0 01-1 0V4a.5.5 0 01.5-.5z"/>';
+            document.getElementById('mute-icon').innerHTML = state.isMuted ? '<path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5l-2-2z"/>' : '<path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>';
+        }
+
+        function updateBullet(i, b, v) { state.tracker[i].bullets[b] = v; save(false); }
+        function addBullet(i) { state.tracker[i].bullets.push(''); save(); }
+        function removeBullet(i, b) { state.tracker[i].bullets.splice(b, 1); save(); }
+        function updateTracker(i) { state.tracker[i].done = !state.tracker[i].done; if(state.tracker[i].done) addXP(20); save(); }
+        function updatePrep(i) { state.prep[i].checked = !state.prep[i].checked; if(state.prep[i].checked) { addXP(state.prep[i].isBoss ? 30 : 10); if(state.prep[i].isBoss) unlockBadge(1); } save(); }
+        function setBossTask(i) { state.prep.forEach(p => p.isBoss = false); state.prep[i].isBoss = true; save(); }
+        function addPrepItem() { const t = document.getElementById('new-prep-item').value; if(t) { state.prep.push({id:Date.now(), text:t, checked:false, isBoss:false}); document.getElementById('new-prep-item').value=''; save(); } }
+        function deletePrep(i) { state.prep.splice(i, 1); save(); }
+        function deleteSubject(i) { state.targets.splice(i, 1); save(); }
+        function addSubjectTarget() { const s = document.getElementById('modal-sub').value, c = document.getElementById('modal-cur').value, t = document.getElementById('modal-tar').value; if(s) { state.targets.push({ subject: s, current: c, target: t }); toggleTargetModal(); unlockBadge(5); save(); } }
+        function toggleTargetModal() { document.getElementById('target-modal').classList.toggle('hidden'); document.getElementById('target-modal').classList.toggle('flex'); }
+        function toggleHistoryModal() { document.getElementById('history-modal').classList.toggle('hidden'); document.getElementById('history-modal').classList.toggle('flex'); updateHistoryContent(); }
+        function updateHistoryContent() { document.getElementById('history-content').innerHTML = state.history.map(h => `<div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100 font-bold text-blue-900">${h.date} - Milestone Reached!</div>`).join('') || '<p class="text-slate-400 italic text-center py-8">No records yet.</p>'; }
+        function archiveWeek() { if(!confirm('Ready?')) return; state.history.unshift({date:new Date().toLocaleDateString(), data:JSON.parse(JSON.stringify(state.tracker))}); state.tracker=Object.keys(dayIcons).map(d=>({day:d, done:false, bullets:['']})); unlockBadge(2); showToast("Week completed!", "🏆"); save(); }
+        function exportToCSV() { let csv = "Term,CN,Example\n" + state.vocab.map(v => `${v.en},${v.cn},"${v.ex}"`).join('\n'); const b = new Blob([csv], { type: 'text/csv' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `hayden_export.csv`; a.click(); }
+        function selectDate(dk) { selectedDate = dk; document.getElementById('add-event-btn').classList.remove('hidden'); document.getElementById('selected-date-label').textContent = dk; renderEventsForDate(dk); }
+        function renderEventsForDate(dk) { const evs = state.events[dk] || []; document.getElementById('date-events').innerHTML = evs.map(e => `<div class="text-[10px] bg-blue-50 p-1.5 rounded-lg font-bold text-blue-900">${e}</div>`).join(''); }
+        function addEvent() { const msg = prompt("Reminder:"); if(msg) { if(!state.events[selectedDate]) state.events[selectedDate]=[]; state.events[selectedDate].push(msg); save(); renderEventsForDate(selectedDate); } }
+        function changeMonth(s) { currentViewDate.setMonth(currentViewDate.getMonth()+s); render(); }
+        function toggleVaultSubpage(t) { const m = document.getElementById('vault-subpage'); if(!t) m.classList.add('hidden'); else { m.classList.remove('hidden'); m.classList.add('flex'); document.getElementById('vault-content').innerHTML = (t==='english'?state.vocab:state.malayVocab).map((v,i)=>renderVaultItem(v,i,t)).join(''); } }
+        function refreshTutorTip() { document.getElementById('tutor-tip-content').innerHTML = tutorTips[Math.floor(Math.random() * tutorTips.length)].replace(/\n/g, '<br>'); }
+
+        window.onload = () => {
+            const idx = new Date().getDate() % motivationQuotes.length;
+            document.getElementById('motivational-quote').textContent = `"${motivationQuotes[idx].en}"`;
+            document.getElementById('motivational-quote-cn').textContent = motivationQuotes[idx].cn;
+            refreshTutorTip(); render(); updateTimerDisplay();
+        };
+    </script>
+</body>
+</html>
