@@ -103,9 +103,10 @@
                     <span class="text-4xl">🎯</span>
                     <h1 class="text-4xl font-bold tracking-tight text-blue-900">Hayden's Study Helper</h1>
                 </div>
-                <div id="sync-indicator" class="flex items-center gap-2 mb-4">
+                <div id="sync-indicator" class="flex items-center gap-3 mb-4">
                     <div id="sync-dot" class="w-2 h-2 rounded-full bg-slate-300"></div>
-                    <span id="sync-status" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Connecting to Cloud...</span>
+                    <span id="sync-status" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Local Mode</span>
+                    <button id="setup-cloud-btn" onclick="toggleCloudModal()" class="text-[9px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full font-bold hover:bg-blue-200 transition-all">☁️ Setup Cloud</button>
                 </div>
                 <div class="space-y-1">
                     <p id="motivational-quote" class="text-blue-500 font-medium italic"></p>
@@ -150,9 +151,7 @@
                 <!-- Achievements Section -->
                 <div class="flex flex-wrap gap-2 justify-start border-t border-indigo-800/50 pt-2">
                     <span class="text-[9px] font-bold text-indigo-400 uppercase self-center mr-2">Trophies:</span>
-                    <div id="badge-container" class="flex flex-wrap gap-3">
-                        <!-- Rendered by JS -->
-                    </div>
+                    <div id="badge-container" class="flex flex-wrap gap-3"></div>
                 </div>
             </div>
 
@@ -204,7 +203,7 @@
             <div id="targets-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
         </section>
 
-        <!-- Streak & Calendar Alignment -->
+        <!-- Streak & Calendar -->
         <div class="flex flex-col lg:flex-row gap-8 mb-12 items-stretch">
             <div class="lg:w-2/3 flex flex-col h-full">
                 <div class="flex items-center justify-between mb-4">
@@ -363,30 +362,6 @@
                         <p class="text-xs font-bold text-purple-900">Sapu → <span class="text-purple-600">Penyapu</span></p>
                     </div>
                 </div>
-                <div class="notion-card p-5 border-l-4 border-red-400">
-                    <p class="text-xs font-black text-red-600 uppercase tracking-widest mb-1">Prefix: di-</p>
-                    <p class="text-[11px] text-slate-500 font-bold mb-3">Function: Passive Actions (被动)</p>
-                    <div class="bg-red-50 p-3 rounded-xl space-y-1.5">
-                        <p class="text-xs font-bold text-red-900">Beli → <span class="text-red-600">Dibeli</span></p>
-                        <p class="text-xs font-bold text-red-900">Makan → <span class="text-red-600">Dimakan</span></p>
-                    </div>
-                </div>
-                <div class="notion-card p-5 border-l-4 border-indigo-400">
-                    <p class="text-xs font-black text-indigo-600 uppercase tracking-widest mb-1">Prefix: ke-</p>
-                    <p class="text-[11px] text-slate-500 font-bold mb-3">Function: Ordinal / State (序数/名词)</p>
-                    <div class="bg-indigo-50 p-3 rounded-xl space-y-1.5">
-                        <p class="text-xs font-bold text-indigo-900">Satu → <span class="text-indigo-600">Kesatu</span></p>
-                        <p class="text-xs font-bold text-indigo-900">Tua → <span class="text-indigo-600">Ketua</span></p>
-                    </div>
-                </div>
-                <div class="notion-card p-5 border-l-4 border-teal-400">
-                    <p class="text-xs font-black text-teal-600 uppercase tracking-widest mb-1">Prefix: se-</p>
-                    <p class="text-[11px] text-slate-500 font-bold mb-3">Function: One / Same (一/相同)</p>
-                    <div class="bg-teal-50 p-3 rounded-xl space-y-1.5">
-                        <p class="text-xs font-bold text-teal-900">Hari → <span class="text-teal-600">Sehari</span></p>
-                        <p class="text-xs font-bold text-teal-900">Kelas → <span class="text-teal-600">Sekelas</span></p>
-                    </div>
-                </div>
             </div>
         </section>
 
@@ -404,6 +379,22 @@
             <span id="toast-msg" class="text-sm font-medium"></span>
         </div>
 
+        <!-- Cloud Setup Modal -->
+        <div id="cloud-setup-modal" class="fixed inset-0 bg-blue-950/60 hidden items-center justify-center p-4 z-[100] backdrop-blur-md">
+            <div class="bg-white p-8 rounded-3xl w-full max-w-md shadow-2xl">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="text-3xl">☁️</span>
+                    <h3 class="font-bold text-xl text-blue-900">Cloud Setup</h3>
+                </div>
+                <p class="text-xs text-slate-500 mb-6 leading-relaxed">To enable cloud tracking on GitHub, paste your Firebase configuration below. You only need to do this once.</p>
+                <textarea id="cloud-config-input" placeholder="Paste { ... } here" class="w-full h-40 border border-blue-100 rounded-2xl p-4 text-[10px] mono outline-none focus:ring-2 focus:ring-blue-100 mb-4 bg-slate-50"></textarea>
+                <div class="flex gap-3">
+                    <button onclick="saveCloudConfig()" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg hover:bg-blue-700 transition-all">Connect Cloud</button>
+                    <button onclick="toggleCloudModal()" class="px-4 py-3 text-slate-400 font-bold hover:text-slate-600">Close</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Modals -->
         <div id="history-modal" class="fixed inset-0 bg-blue-900/40 hidden items-center justify-center p-4 z-50 backdrop-blur-md">
             <div class="bg-white p-6 rounded-2xl w-full max-w-2xl shadow-2xl max-h-[80vh] overflow-hidden flex flex-col border border-blue-100">
@@ -419,22 +410,12 @@
             <div class="bg-white p-8 rounded-2xl w-full max-w-sm shadow-2xl">
                 <h3 class="font-bold text-xl mb-6 text-blue-900">Add Score Target</h3>
                 <div class="space-y-5">
-                    <div>
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Subject Name</label>
-                        <input id="modal-sub" type="text" placeholder="e.g. Science" class="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-100">
-                    </div>
+                    <input id="modal-sub" type="text" placeholder="Subject" class="w-full border rounded-xl px-4 py-3">
                     <div class="flex gap-4">
-                        <div class="w-1/2">
-                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Current %</label>
-                            <input id="modal-cur" type="number" placeholder="50" class="w-full border rounded-xl px-4 py-3 outline-none">
-                        </div>
-                        <div class="w-1/2">
-                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Target %</label>
-                            <input id="modal-tar" type="number" placeholder="80" class="w-full border rounded-xl px-4 py-3 outline-none">
-                        </div>
+                        <input id="modal-cur" type="number" placeholder="Current %" class="w-1/2 border rounded-xl px-4 py-3">
+                        <input id="modal-tar" type="number" placeholder="Target %" class="w-1/2 border rounded-xl px-4 py-3">
                     </div>
-                    <button onclick="addSubjectTarget()" class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all">Save Progress Goal</button>
-                    <button onclick="toggleTargetModal()" class="w-full py-2 text-slate-400 text-xs font-bold hover:text-slate-600">Cancel</button>
+                    <button onclick="addSubjectTarget()" class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg">Save Goal</button>
                 </div>
             </div>
         </div>
@@ -454,83 +435,9 @@
         </footer>
     </div>
 
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
-        import { getFirestore, doc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
-
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
-        let userId = null;
-        let isSyncing = false;
-
-        const syncStatusText = document.getElementById('sync-status');
-        const syncDot = document.getElementById('sync-dot');
-
-        function setSyncStatus(status) {
-            if (status === 'connected') {
-                syncStatusText.textContent = "Cloud Sync: Active";
-                syncDot.className = "w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]";
-            } else if (status === 'syncing') {
-                syncStatusText.textContent = "Cloud Sync: Saving...";
-                syncDot.className = "w-2 h-2 rounded-full bg-amber-400 animate-pulse";
-            } else if (status === 'error') {
-                syncStatusText.textContent = "Cloud Sync: Error";
-                syncDot.className = "w-2 h-2 rounded-full bg-red-500";
-            }
-        }
-
-        const initAuth = async () => {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (error) {
-                setSyncStatus('error');
-            }
-        };
-        initAuth();
-
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                userId = user.uid;
-                setSyncStatus('connected');
-                const docRef = doc(db, 'artifacts', appId, 'users', userId, 'data', 'dashboardState');
-                onSnapshot(docRef, (docSnap) => {
-                    if (docSnap.exists() && !isSyncing) {
-                        window.updateStateFromCloud(docSnap.data());
-                    }
-                }, (error) => {
-                    setSyncStatus('error');
-                });
-            }
-        });
-
-        window.pushToCloud = async (state) => {
-            if (!userId) return;
-            isSyncing = true;
-            setSyncStatus('syncing');
-            try {
-                const docRef = doc(db, 'artifacts', appId, 'users', userId, 'data', 'dashboardState');
-                await setDoc(docRef, JSON.parse(JSON.stringify(state)));
-                setSyncStatus('connected');
-            } catch (error) {
-                setSyncStatus('error');
-            } finally {
-                isSyncing = false;
-            }
-        };
-    </script>
-
+    <!-- Logic -->
     <script>
-        // Core Logic
+        const apiKey = "";
         const examLibrary = [
             { v: 'State', cn: '列出 / 简单说明', bm: 'Nyatakan' },
             { v: 'Describe', cn: '描述过程/特征', bm: 'Perihalkan' },
@@ -569,17 +476,17 @@
         ];
         
         const tutorTips = [ 
-            "💡 不要死记硬背：理解逻辑才是关键。如果你无法用英语表达，请使用 AI 工具先写出中文思路。\nDon't just memorize: Logic is key.",
-            "🧪 Science: Identify your Manipulated Variable (MV) first. The 'outcome' is always the Responding Variable (RV).",
-            "📖 English: When writing essays, use 'connectors' (Furthermore, However).",
+            "💡 不要死记硬背：理解逻辑才是关键。",
+            "🧪 Science: Identify your Manipulated Variable (MV) first.",
+            "📖 English: When writing essays, use 'connectors'.",
             "📜 Sejarah: Don't memorize dates; memorize the 'story'.",
             "🌍 Geography: Visualizing maps is easier than reading text.",
-            "🧠 Spaced Repetition: 10 mins of review is better than 1 hour of cramming."
+            "🧠 间隔重复：复习 10 分钟优于死记硬背 1 小时。"
         ];
 
         const levelTitles = ["Knowledge Scout", "Science Apprentice", "Academic Warrior", "Sejarah Master", "Geography Genius", "Study Legend"];
 
-        let state = JSON.parse(localStorage.getItem('hayden_final_v1')) || {
+        let state = JSON.parse(localStorage.getItem('hayden_master_v1')) || {
             tracker: Object.keys(dayIcons).map(d => ({ day: d, done: false, bullets: [''] })),
             vocab: [{ en: 'Evaporation', cn: '蒸发', ex: 'Sweat drying on skin.', exCn: '皮肤上的汗水变干。' }],
             malayVocab: [{ bm: 'Tumbuhan', cn: '植物', ex: 'Tumbuhan perlu matahari.', exCn: '植物需要阳光。' }],
@@ -599,15 +506,30 @@
             setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 3000);
         }
 
+        function toggleCloudModal() { document.getElementById('cloud-setup-modal').classList.toggle('hidden'); document.getElementById('cloud-setup-modal').classList.toggle('flex'); }
+
+        function saveCloudConfig() {
+            const input = document.getElementById('cloud-config-input').value;
+            try {
+                const config = JSON.parse(input);
+                localStorage.setItem('hayden_cloud_config', input);
+                alert("Cloud Config Saved! Refreshing...");
+                location.reload();
+            } catch (e) {
+                alert("Invalid configuration. Make sure you copy the entire { ... } block.");
+            }
+        }
+
+        // Bridge function for external Firebase script
         window.updateStateFromCloud = (cloudState) => {
             state = cloudState;
-            localStorage.setItem('hayden_final_v1', JSON.stringify(state));
+            localStorage.setItem('hayden_master_v1', JSON.stringify(state));
             render();
         };
 
         function save(pushHistory = true) {
             if (pushHistory) { historyStack.push(JSON.stringify(state)); redoStack = []; }
-            localStorage.setItem('hayden_final_v1', JSON.stringify(state));
+            localStorage.setItem('hayden_master_v1', JSON.stringify(state));
             if (window.pushToCloud) window.pushToCloud(state);
             render(); 
         }
@@ -616,12 +538,11 @@
         function redo() { if (redoStack.length === 0) return; historyStack.push(JSON.stringify(state)); state = JSON.parse(redoStack.pop()); save(false); }
 
         function unlockBadge(idx) {
-            if(!state.badges[idx]) { state.badges[idx] = true; showToast(`New Trophy: ${trophyLibrary[idx].title}`, "🏆"); save(false); }
+            if(!state.badges[idx]) { state.badges[idx] = true; showToast(`Unlocked: ${trophyLibrary[idx].title}`, "🏆"); save(false); }
         }
 
         function addXP(amount) {
-            const actualGain = Math.floor(amount * 1.5);
-            state.xp += actualGain;
+            const gain = Math.floor(amount * 1.5); state.xp += gain;
             const threshold = state.level * 100;
             if (state.xp >= threshold) {
                 state.xp -= threshold; state.level++;
@@ -653,7 +574,7 @@
                         clearInterval(timerInterval); isTimerRunning = false;
                         addXP(50); unlockBadge(3);
                         if(!state.isMuted) playTone(440, 0.5, 1);
-                        showToast("Done!", "🔔"); resetTimer();
+                        showToast("Session Done!", "🔔"); resetTimer();
                     }
                     updateTimerDisplay();
                 }, 1000);
@@ -661,19 +582,9 @@
             render();
         }
 
-        function resetTimer() {
-            clearInterval(timerInterval); isTimerRunning = false;
-            timeLeft = parseInt(document.getElementById('timer-duration').value) * 60;
-            updateTimerDisplay(); render();
-        }
-
-        function updateTimerDisplay() {
-            const m = Math.floor(timeLeft / 60); const s = timeLeft % 60;
-            document.getElementById('timer-display').textContent = `${m}:${s.toString().padStart(2, '0')}`;
-        }
-
+        function resetTimer() { clearInterval(timerInterval); isTimerRunning = false; timeLeft = parseInt(document.getElementById('timer-duration').value) * 60; updateTimerDisplay(); render(); }
+        function updateTimerDisplay() { const m = Math.floor(timeLeft / 60); const s = timeLeft % 60; document.getElementById('timer-display').textContent = `${m}:${s.toString().padStart(2, '0')}`; }
         function toggleMute() { state.isMuted = !state.isMuted; save(false); }
-
         function switchTab(t) { quizMode = (t === 'quiz'); render(); }
         function startQuiz(t) { quizMode = true; switchTab('vaults'); unlockBadge(6); }
 
@@ -691,7 +602,7 @@
         }
 
         async function generateAutoExample(t) {
-            const p = `Science example for "${t}". Format: Example: [text] | Translation: [text]`;
+            const p = `Short science example for "${t}". Format: Example: [text] | Translation: [text]`;
             try {
                 const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ contents: [{ parts: [{ text: p }] }] }) });
                 const res = await r.json(); const txt = res.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -701,8 +612,8 @@
 
         function renderVaultItem(v, i, t) {
             return `<div class="p-3 bg-blue-50/50 rounded-xl group border border-blue-100 relative shadow-sm">
-                <div class="flex justify-between items-center mb-1"><span class="font-bold text-black text-xs">${v.en || v.bm}</span><button onclick="deleteVocab('${t}', ${i})" class="text-blue-300 opacity-0 group-hover:opacity-100 font-bold hover:text-red-500">✕</button></div>
-                <div class="${quizMode ? 'quiz-hidden' : ''}"><div class="text-slate-700 font-bold text-[14px]">${v.cn}</div><div class="mt-1 text-slate-600 text-[11px] font-medium">${v.ex || ''}</div></div></div>`;
+                <div class="flex justify-between items-center mb-1"><span class="font-bold text-black text-xs">${v.en || v.bm}</span><button onclick="deleteVocab('${t}', ${i})" class="text-blue-300 opacity-0 group-hover:opacity-100 font-bold hover:text-red-500 transition-all">✕</button></div>
+                <div class="${quizMode ? 'quiz-hidden' : ''}"><div class="text-slate-700 font-bold text-[14px]">${v.cn}</div><div class="mt-1 text-slate-600 text-[11px] font-medium leading-tight">${v.ex || ''}</div></div></div>`;
         }
 
         function deleteVocab(t, i) { if(t==='english') state.vocab.splice(i, 1); else state.malayVocab.splice(i, 1); save(); }
@@ -717,20 +628,20 @@
 
             document.getElementById('badge-container').innerHTML = trophyLibrary.map((t, i) => `
                 <div class="tooltip-container">
-                    <span class="text-xl transition-all cursor-help ${state.badges[i] ? '' : 'opacity-20 grayscale filter'} block">${t.icon}</span>
-                    <div class="tooltip-text trophy-tooltip"><p class="font-black text-[10px] uppercase mb-1">${t.title}</p><p class="text-[9px] text-slate-300">${state.badges[i] ? '🏆 Unlocked!' : '🔒 ' + t.req}</p></div>
+                    <span class="text-xl transition-all duration-500 cursor-help ${state.badges[i] ? '' : 'opacity-20 grayscale filter'} block">${t.icon}</span>
+                    <div class="tooltip-text trophy-tooltip"><p class="font-black text-[10px] uppercase mb-1">${t.title}</p><p class="text-[9px] text-slate-300 leading-none">${state.badges[i] ? '🏆 Unlocked!' : '🔒 ' + t.req}</p></div>
                 </div>`).join('');
 
             document.getElementById('tracker-body').innerHTML = state.tracker.map((item, idx) => `
                 <tr class="border-b last:border-0 hover:bg-blue-50 transition">
                     <td class="px-4 py-4 font-bold text-blue-900">${dayIcons[item.day]} ${item.day.slice(0,3)}</td>
                     <td class="px-4 py-4 text-center"><input type="checkbox" ${item.done ? 'checked' : ''} onchange="updateTracker(${idx})" class="checkbox-custom"></td>
-                    <td class="px-4 py-4"><div class="space-y-2">${item.bullets.map((b, bIdx) => `<div class="flex items-center gap-2 group/bullet"><span class="text-blue-200">•</span><input type="text" value="${b}" onchange="updateBullet(${idx}, ${bIdx}, this.value)" class="flex-1 bg-transparent text-xs outline-none focus:border-blue-200"><button onclick="removeBullet(${idx}, ${bIdx})" class="opacity-0 group-hover/bullet:opacity-100 text-red-300">✕</button></div>`).join('')}<button onclick="addBullet(${idx})" class="text-[9px] font-bold text-blue-400 uppercase tracking-widest">+ Add Point</button></div></td>
+                    <td class="px-4 py-4"><div class="space-y-2">${item.bullets.map((b, bIdx) => `<div class="flex items-center gap-2 group/bullet"><span class="text-blue-200">•</span><input type="text" value="${b}" onchange="updateBullet(${idx}, ${bIdx}, this.value)" class="flex-1 bg-transparent text-xs text-slate-600 outline-none border-b border-transparent focus:border-blue-200"><button onclick="removeBullet(${idx}, ${bIdx})" class="opacity-0 group-hover/bullet:opacity-100 text-red-300">✕</button></div>`).join('')}<button onclick="addBullet(${idx})" class="text-[9px] font-bold text-blue-400 uppercase tracking-widest">+ Add Point</button></div></td>
                 </tr>`).join('');
 
             document.getElementById('prep-checklist').innerHTML = state.prep.map((item, idx) => `<div class="flex items-center justify-between group p-1.5 hover:bg-blue-50/50 rounded-lg transition ${item.isBoss ? 'boss-task' : ''}"><div class="flex items-center gap-2"><input type="checkbox" ${item.checked ? 'checked' : ''} onchange="updatePrep(${idx})" class="checkbox-custom"><span class="text-xs ${item.checked ? 'line-through text-slate-300' : 'text-slate-600'} font-medium">${item.isBoss ? '👑 ' : ''}${item.text}</span></div><div class="flex gap-2"><button onclick="setBossTask(${idx})" class="opacity-0 group-hover:opacity-100 text-yellow-500">👑</button><button onclick="deletePrep(${idx})" class="opacity-0 group-hover:opacity-100 text-red-300">✕</button></div></div>`).join('');
 
-            document.getElementById('targets-grid').innerHTML = state.targets.map((t, idx) => `<div class="notion-card p-4 relative bg-blue-50/10"><p class="text-[10px] font-bold text-blue-600 uppercase tracking-tighter">${t.subject}</p><div class="flex justify-between items-end mt-2"><span class="text-2xl font-black text-amber-500 mono">${t.target}%</span><span class="text-[10px] text-slate-500 font-bold bg-white px-2 rounded-full border border-blue-50">${t.current}%</span></div><button onclick="deleteSubject(${idx})" class="absolute top-1 right-2 text-slate-200 hover:text-red-400">✕</button></div>`).join('');
+            document.getElementById('targets-grid').innerHTML = state.targets.map((t, idx) => `<div class="notion-card p-4 relative bg-blue-50/10 border-blue-100/50"><p class="text-[10px] font-bold text-blue-600 uppercase tracking-tighter">${t.subject}</p><div class="flex justify-between items-end mt-2"><span class="text-2xl font-black text-amber-500 mono">${t.target}%</span><span class="text-[10px] text-slate-500 font-bold bg-white px-2 rounded-full border border-blue-50">${t.current}%</span></div><button onclick="deleteSubject(${idx})" class="absolute top-1 right-2 text-slate-200 hover:text-red-400">✕</button></div>`).join('');
 
             document.getElementById('vocab-list').innerHTML = state.vocab.slice(0,5).map((v, i) => renderVaultItem(v, i, 'english')).join('');
             document.getElementById('malay-vocab-list').innerHTML = state.malayVocab.slice(0,5).map((v, i) => renderVaultItem(v, i, 'malay')).join('');
@@ -766,7 +677,7 @@
         function addSubjectTarget() { const s = document.getElementById('modal-sub').value, c = document.getElementById('modal-cur').value, t = document.getElementById('modal-tar').value; if(s) { state.targets.push({ subject: s, current: c, target: t }); toggleTargetModal(); unlockBadge(5); save(); } }
         function toggleTargetModal() { document.getElementById('target-modal').classList.toggle('hidden'); document.getElementById('target-modal').classList.toggle('flex'); }
         function toggleHistoryModal() { document.getElementById('history-modal').classList.toggle('hidden'); document.getElementById('history-modal').classList.toggle('flex'); updateHistoryContent(); }
-        function updateHistoryContent() { document.getElementById('history-content').innerHTML = state.history.map(h => `<div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100 font-bold text-blue-900">${h.date} - Milestone Reached!</div>`).join('') || '<p class="text-slate-400 italic text-center py-8">No records yet.</p>'; }
+        function updateHistoryContent() { document.getElementById('history-content').innerHTML = state.history.map(h => `<div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100 font-bold text-blue-900">${h.date} - Milestone!</div>`).join('') || '<p class="text-slate-400 italic text-center py-8">No records yet.</p>'; }
         function archiveWeek() { if(!confirm('Ready?')) return; state.history.unshift({date:new Date().toLocaleDateString(), data:JSON.parse(JSON.stringify(state.tracker))}); state.tracker=Object.keys(dayIcons).map(d=>({day:d, done:false, bullets:['']})); unlockBadge(2); showToast("Week completed!", "🏆"); save(); }
         function exportToCSV() { let csv = "Term,CN,Example\n" + state.vocab.map(v => `${v.en},${v.cn},"${v.ex}"`).join('\n'); const b = new Blob([csv], { type: 'text/csv' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `hayden_export.csv`; a.click(); }
         function selectDate(dk) { selectedDate = dk; document.getElementById('add-event-btn').classList.remove('hidden'); document.getElementById('selected-date-label').textContent = dk; renderEventsForDate(dk); }
@@ -782,6 +693,90 @@
             document.getElementById('motivational-quote-cn').textContent = motivationQuotes[idx].cn;
             refreshTutorTip(); render(); updateTimerDisplay();
         };
+    </script>
+
+    <!-- Cloud Sync Script -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+
+        let firebaseConfig;
+        let appId = "hayden-dashboard";
+
+        // Try environment first, then localstorage
+        if (typeof __firebase_config !== 'undefined') {
+            firebaseConfig = JSON.parse(__firebase_config);
+            appId = typeof __app_id !== 'undefined' ? __app_id : 'hayden-dashboard';
+        } else {
+            const savedConfig = localStorage.getItem('hayden_cloud_config');
+            if (savedConfig) firebaseConfig = JSON.parse(savedConfig);
+        }
+
+        const syncStatusText = document.getElementById('sync-status');
+        const syncDot = document.getElementById('sync-dot');
+
+        if (firebaseConfig) {
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
+            let userId = null;
+            let isSyncing = false;
+
+            function setSyncUI(status) {
+                if (status === 'connected') {
+                    syncStatusText.textContent = "Cloud Sync: Active";
+                    syncDot.className = "w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]";
+                    document.getElementById('setup-cloud-btn').style.display = 'none';
+                } else if (status === 'saving') {
+                    syncStatusText.textContent = "Cloud Sync: Saving...";
+                    syncDot.className = "w-2 h-2 rounded-full bg-amber-400 animate-pulse";
+                } else {
+                    syncStatusText.textContent = "Cloud Sync: Offline";
+                    syncDot.className = "w-2 h-2 rounded-full bg-red-500";
+                }
+            }
+
+            const startSync = async () => {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            };
+            startSync();
+
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    userId = user.uid;
+                    setSyncUI('connected');
+                    const docRef = doc(db, 'artifacts', appId, 'users', userId, 'data', 'state');
+                    onSnapshot(docRef, (docSnap) => {
+                        if (docSnap.exists() && !isSyncing) {
+                            window.updateStateFromCloud(docSnap.data());
+                        }
+                    });
+                }
+            });
+
+            window.pushToCloud = async (state) => {
+                if (!userId) return;
+                isSyncing = true;
+                setSyncUI('saving');
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'users', userId, 'data', 'state');
+                    await setDoc(docRef, JSON.parse(JSON.stringify(state)));
+                    setSyncUI('connected');
+                } catch (e) {
+                    setSyncUI('error');
+                } finally {
+                    isSyncing = false;
+                }
+            };
+        } else {
+            syncStatusText.textContent = "Cloud Sync: Setup Required";
+            syncDot.className = "w-2 h-2 rounded-full bg-slate-300";
+        }
     </script>
 </body>
 </html>
